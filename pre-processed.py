@@ -1,44 +1,66 @@
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-
-df = pd.read_csv('ds_salaries.csv')
-df.drop_duplicates(inplace=True)
-df.drop(['salary', 'salary_currency'], axis=1, inplace=True)
 sns.set_style('whitegrid')
-print("--- Shape of the Dataset after initial cleaning ---")
-print(f"Rows: {df.shape[0]}, Columns: {df.shape[1]}")
-print("\n--- First 5 Rows ---")
+df = pd.read_csv('/content/ds_salaries.csv')
+print("--- Dataset successfully loaded ---")
+initial_rows = df.shape[0]
+df.drop_duplicates(inplace=True)
+print(f"Removed {initial_rows - df.shape[0]} duplicate rows.")
+df.drop(['salary', 'salary_currency'], axis=1, inplace=True)
+print("Dropped 'salary' and 'salary_currency' columns.")
+print("\n--- 2a. Dataframe Quicklook ---")
+print("First 5 Rows:")
 print(df.head())
-print("\n--- 1. Applying One-Hot Encoding ---")
+print("\nShape of the Cleaned Dataset:", df.shape)
+print("\nDataset Info:")
+df.info()
+print("\nOverall Statistics:")
+print(df.describe())
+print("\n--- 3a. Visualizing Missing Data ---")
+plt.figure(figsize=(10, 6))
+sns.heatmap(df.isnull(), cbar=False, cmap='viridis')
+plt.title('Missing Data Heatmap', fontsize=16)
+plt.show()
+print("\n--- 3b. Visualizing Outliers ---")
+plt.figure(figsize=(15, 7))
+plt.subplot(1, 2, 1)
+sns.boxplot(y=df['salary_in_usd'], color='lightblue')
+plt.title('Box Plot of Salary (in USD)', fontsize=14)
+plt.subplot(1, 2, 2)
+sns.boxplot(y=df['remote_ratio'], color='lightgreen')
+plt.title('Box Plot of Remote Ratio', fontsize=14)
+plt.tight_layout()
+plt.show()
+print("\n--- 3c. Visualizing Data Transformations ---")
+df['log_salary_in_usd'] = np.log1p(df['salary_in_usd'])
+plt.figure(figsize=(15, 6))
+plt.subplot(1, 2, 1)
+sns.histplot(df['salary_in_usd'], kde=True, color='skyblue', bins=30)
+plt.title('Original Salary Distribution', fontsize=14)
+plt.subplot(1, 2, 2)
+sns.histplot(df['log_salary_in_usd'], kde=True, color='salmon', bins=30)
+plt.title('Log-Transformed Salary Distribution', fontsize=14)
+plt.tight_layout()
+plt.show()
+df.drop('log_salary_in_usd', axis=1, inplace=True)
+print("\n--- 4a. Applying One-Hot Encoding ---")
 categorical_cols = ['experience_level', 'employment_type', 'job_title', 'employee_residence', 'company_location', 'company_size']
 df_encoded = pd.get_dummies(df, columns=categorical_cols, drop_first=True)
-
 print("Shape after One-Hot Encoding:", df_encoded.shape)
-print("A few columns from the encoded dataframe:")
-print(df_encoded[['work_year', 'salary_in_usd', 'remote_ratio', 'experience_level_EX', 'employment_type_FT']].head())
-print("\n--- 2. Applying Standard Scaler ---")
-
+print("\n--- 4b. Applying Standard Scaler ---")
 X = df_encoded.drop('salary_in_usd', axis=1)
 y = df_encoded['salary_in_usd']
-
-
 scaler = StandardScaler()
-
 X_scaled = scaler.fit_transform(X)
-
 X_scaled_df = pd.DataFrame(X_scaled, columns=X.columns)
-
-print("Scaled features (first 5 rows):")
-print(X_scaled_df.head())
-
-print("\n--- 3. Performing Train-Test Split ---")
-
+print("Features have been successfully scaled.")
+print("\n--- 4c. Performing Train-Test Split ---")
 X_train, X_test, y_train, y_test = train_test_split(X_scaled_df, y, test_size=0.2, random_state=42)
-
-print("Shape of the training features (X_train):", X_train.shape)
-print("Shape of the testing features (X_test):", X_test.shape)
-print("Shape of the training target (y_train):", y_train.shape)
-print("Shape of the testing target (y_test):", y_test.shape)
+print("Data has been split into training and testing sets.")
+print("Shape of X_train:", X_train.shape)
+print("Shape of X_test:", X_test.shape)
+print("\n--- End of script ---")
